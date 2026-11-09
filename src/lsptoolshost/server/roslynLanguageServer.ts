@@ -337,9 +337,13 @@ export class RoslynLanguageServer {
                             item.insertText = new vscode.SnippetString(`${item.insertText}($0)`);
                         }
                     }
+                    
+                    const newItems = items.filter((item) => item.insertText !== 'scoped');
+                    if (Array.isArray(result)) return newItems;
+                    result.items = newItems;
 
                     return result;
-                },
+                }
                 async sendRequest(type, param, token, next) {
                     if (server !== undefined && type !== RoslynProtocol.VSGetProjectContextsRequest.type) {
                         RoslynLanguageServer.tryAddProjectContext(param, server);
