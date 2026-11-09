@@ -1,0 +1,26 @@
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  release:
+    runs-on: ubuntu
+    steps:
+      - name: Extract tag name
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Dependencies
+        run: npm i
+
+      - name: Package
+        run: npm run vsix:release:package
+
+      - name: Publish Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: vsix/*.vsix
+          tag: ${{ env.TAG_NAME }}
