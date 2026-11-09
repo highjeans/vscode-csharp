@@ -312,6 +312,34 @@ export class RoslynLanguageServer {
             middleware: {
                 provideDiagnostics,
                 provideWorkspaceDiagnostics,
+                async provideCompletionItem(document, position, context, token, next) {
+                    const result = await next(document, position, context, token);
+                    if (!result) {
+                        return result;
+                    }
+
+                    const items = Array.isArray(result) ? result : result.items;
+                    for (const item of items) {
+                        if (
+                            item.kind !== vscode.CompletionItemKind.Method &&
+                            item.kind !== vscode.CompletionItemKind.Function &&
+                            item.kind !== vscode.CompletionItemKind.Constructor
+                        ) {
+                            continue;
+                        }
+
+                        // Complex completions already provide their own edit.
+                        if (item.command) {
+                            continue;
+                        }
+
+                        if (typeof item.insertText === 'string' && !item.insertText.includes('(')) {
+                            item.insertText = new vscode.SnippetString(`${item.insertText}($0)`);
+                        }
+                    }
+
+                    return result;
+                },
                 async sendRequest(type, param, token, next) {
                     if (server !== undefined && type !== RoslynProtocol.VSGetProjectContextsRequest.type) {
                         RoslynLanguageServer.tryAddProjectContext(param, server);
